@@ -6,12 +6,56 @@
 ## 必要環境
 
 - Python 3.8以上
-- ChromeおよびChromeDriver
-- `git` (オプション：リポジトリのクローン時)
+- ChromeDriver
 
 ---
 
 ## インストール手順
+
+0. **事前準備**
+   ```bash
+   sudo apt update -y
+
+   sudo apt install -y python3-pip
+   ```
+
+   ### Google Chrome Install
+   ```bash
+   wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+
+   sudo apt install -y ./google-chrome-stable_current_amd64.deb
+   ```
+
+   ### ChromeDriver install
+   ```bash
+   cd /tmp/
+   ```
+
+   最新版は https://sites.google.com/chromium.org/driver/downloads から入手する
+   ```bash
+   curl -O https://storage.googleapis.com/chrome-for-testing-public/130.0.6723.69/linux64/chromedriver-linux64.zip
+   ```
+
+   ### ChromeDriverに実行権限を付与
+   ```bash
+   unzip chromedriver-linux64.zip && \
+   cd chromedriver-linux64/ && \
+   sudo mv chromedriver /usr/local/bin/ && \
+   sudo chmod +x /usr/local/bin/chromedriver
+   ```
+
+   不要になったファイル等は削除
+   ```bash
+   cd .. && \
+   rm chromedriver-linux64.zip && \
+   rm -rf chromedriver-linux64/
+   ```
+
+   依存ライブラリをインストール
+   ```bash
+   sudo apt install -y libnss3 libatk-bridge2.0-0 libx11-xcb1
+   ```
+
 
 1. **リポジトリのクローン**
    ```bash
@@ -39,29 +83,3 @@
    ```bash
    cp .env.dist .env
    ```
-
----
-
-## 実行方法
-
-1. **フライヤー画像のダウンロード**
-   ```bash
-   python3 download_flier_images.py
-   ```
-
-2. **タレントチケット情報の取得**
-   ```bash
-   python3 talent_tickets.py
-   ```
-
-3. **劇場スケジュールの取得**
-   ```bash
-   python3 theater_schedules.py
-   ```
-
----
-
-## 注意事項
-
-- 対象サイトの仕様変更により、取得処理が正常に動作しなくなる場合があります。
-- スクレイピングの使用については対象サイトの利用規約を遵守してください。
