@@ -10,7 +10,7 @@
 
 ---
 
-## インストール手順
+## インストール
 
 0. **事前準備**
    ```bash
@@ -63,21 +63,12 @@
    cd funny-event-scraper
    ```
 
-2. **必要ライブラリのインストール**
-   以下のコマンドでライブラリをインストールします。
+2. **利用ライブラリのインストール**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **ChromeDriverのインストール**
-   - Chromeのバージョンに対応した[ChromeDriver](https://chromedriver.chromium.org/)をダウンロードします。
-   - `/usr/local/bin/`に配置するか、PATHを通してください。
-
----
-
-## 設定
-
-1. **.envファイルの作成**  
+3. **.envファイルの作成**  
    プロジェクトルートに`.env`ファイルを作成し、必要情報を記述してください。
 
    ```bash
