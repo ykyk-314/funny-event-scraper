@@ -1,0 +1,4 @@
+flier_images/*
+*.log
+*.csv
+\.env
