@@ -58,6 +58,9 @@ def setup_driver_options():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    # User-Agentの設定
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.92 Safari/537.36"
+    options.add_argument(f"user-agent={user_agent}")
     return options
 
 def get_element_text(element, selector):
