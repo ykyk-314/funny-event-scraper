@@ -59,7 +59,7 @@
 
 1. **リポジトリのクローン**
    ```bash
-   git clone https://github.com/your-username/funny-event-scraper.git
+   git clone git@github.com:ykyk-314/funny-event-scraper.git
    cd funny-event-scraper
    ```
 
