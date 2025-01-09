@@ -7,6 +7,8 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 import json
+import re
+import csv
 
 load_dotenv()
 
@@ -52,6 +54,9 @@ def retrieve_monthly_schedules(driver, venue_name):
     # 各月のリンクをクリックしてスケジュールを取得
     month_links = driver.find_elements(By.CSS_SELECTOR, '.calendar-month a')
 
+    # Venueの表記ゆれを変換
+    venue_name = convert_venue_name(venue_name)
+
     for month_link in month_links:
         month_link.click()
         print(f"Retrieving schedule for {month_link.text} at {venue_name}.")
@@ -79,7 +84,7 @@ def retrieve_monthly_schedules(driver, venue_name):
                 times = get_element_text(time_block, 'span').split('｜')
                 open_time, start_time, end_time = parse_times(times)
                 members = get_members(detail_block)
-                detail = get_element_text(detail_block, 'dl:nth-of-type(3) dd').replace('\n', '|')
+                detail = clean_text(get_element_text(detail_block, 'dl:nth-of-type(3) dd'))
                 link = get_element_attribute(detail_block, '.btns a:not(.is-pink)', 'href')
 
                 events.append({
@@ -94,6 +99,16 @@ def retrieve_monthly_schedules(driver, venue_name):
                     'Link': link
                 })
     return events
+
+def convert_venue_name(venue_name):
+    """
+    Venueの表記ゆれを変換
+    """
+    conversions = {
+        'ヨシモト∞ドーム　ステージI': 'ヨシモト∞ドーム　ステージⅠ',
+        'ヨシモト∞ドーム　ステージII': 'ヨシモト∞ドーム　ステージⅡ'
+    }
+    return conversions.get(venue_name, venue_name)
 
 def setup_driver_options():
     options = Options()
@@ -134,6 +149,12 @@ def parse_times(times):
     except:
         return '-', '-', '-'
 
+def clean_text(text):
+    # HTMLタグを削除し、余分な改行やスペースを整形
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
 all_events = []
 for venue in theaters:
     stages = venue.get('stages')
@@ -142,6 +163,6 @@ for venue in theaters:
 
 # データをCSVに保存
 df = pd.DataFrame(all_events)
-df.to_csv('theater_schedules.csv', index=False, encoding='utf-8-sig')
+df.to_csv('theater_schedules.csv', index=False, encoding='utf-8-sig', quoting=csv.QUOTE_ALL)
 
 print("公演スケジュールの取得が完了し、CSVファイルに保存しました。")

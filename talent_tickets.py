@@ -7,6 +7,8 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 import json
+import re
+import csv
 
 load_dotenv()
 
@@ -17,6 +19,7 @@ talents = json.loads(os.getenv('TALENTS'))
 
 
 def get_ticket_info(talent_id, talent_name):
+    print(f"{talent_id}: {talent_name} の情報を取得しています")
     url = f"{talent_url}{talent_id}"
     driver = webdriver.Chrome(service=Service(chromedriver_path), options=setup_driver_options())
     driver.get(url)
@@ -33,21 +36,21 @@ def get_ticket_info(talent_id, talent_name):
         title = get_element_text(event, '.feed-ticket-title')
         date = format_date(get_element_text(event, '.opt-feed-ft-dateside p:first-child'))
         time = get_element_text(event, '.opt-feed-ft-dateside p:last-child')
-        members = get_element_text(event, '.opt-feed-ft-element-member').replace('\n', '|')
+        members = clean_text(get_element_text(event, '.opt-feed-ft-element-member').replace('\n', '|'))
         venue = get_element_text(event, '.opt-feed-ft-element-venue')
         image = get_element_attribute(event, '.feed-item-img', 'src')
         link = get_element_attribute(event, '.feed-item-link', 'href')
 
         events.append({
-            'Talent': talent_name,
-            'ID': talent_id,
-            'Title': title,
-            'Date': date,
-            'StartTime': time,
-            'Members': members,
-            'Venue': venue,
+            'TalentName': talent_name,
+            'TalentID': talent_id,
+            'EventTitle': title,
+            'EventDate': date,
+            'EventStartTime': time,
+            'EventMembers': members,
+            'TheaterVenue': venue,
             'Image': image,
-            'Link': link
+            'TicketLink': link
         })
 
     driver.quit()
@@ -77,10 +80,25 @@ def get_element_attribute(element, selector, attribute):
 
 def format_date(date_text):
     try:
-        month, day = date_text.split('/')
-        return f"{month.zfill(2)}-{day.zfill(2)}"
+        month, day = map(int, date_text.split('/'))
+        current_year = int(t.strftime("%Y"))
+        current_month = int(t.strftime("%m"))
+        
+        # 現在の月よりも後の月の場合、前年と推測
+        if month < current_month:
+            year = current_year + 1
+        else:
+            year = current_year
+        
+        return f"{year}-{str(month).zfill(2)}-{str(day).zfill(2)}"
     except:
         return '-'
+
+def clean_text(text):
+    # HTMLタグを削除し、余分な改行やスペースを整形
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
 all_events = []
 for talent in talents:
@@ -89,6 +107,6 @@ for talent in talents:
 
 # データをCSVに保存
 df = pd.DataFrame(all_events)
-df.to_csv('talent_tickets.csv', index=False, encoding='utf-8-sig')
+df.to_csv('talent_tickets.csv', index=False, encoding='utf-8-sig', quoting=csv.QUOTE_ALL)
 
 print("公演情報の取得が完了し、CSVファイルに保存しました。")

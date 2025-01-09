@@ -3,6 +3,7 @@ import os
 import logging
 import json
 from dotenv import load_dotenv
+import csv
 
 # ログの設定
 logging.basicConfig(level=logging.INFO)
@@ -14,54 +15,73 @@ load_dotenv()
 talent_df = pd.read_csv('talent_tickets.csv')
 theater_df = pd.read_csv('theater_schedules.csv')
 
-def merge_and_export(talent_id, talent_name):
+def process_talent_schedule(talent_id, talent_name):
     """
-    指定タレントごとにデータをマージし、CSVとして出力する
+    タレントスケジュールと劇場スケジュールを処理し、タレントごとのCSVを出力
     """
     logging.info(f"{talent_name} のデータを処理しています")
 
-    # 1. talent_ticketsのデータを取得
-    talent_events = talent_df[talent_df['ID'] == talent_id]
+    # タレントスケジュールをフィルタリング
+    talent_schedule = talent_df[talent_df['TalentID'] == talent_id]
 
-    # 2. theater_schedulesの該当タレントのデータを取得
-    theater_events = theater_df[theater_df['Members'].str.contains(talent_name, na=False)]
+    # 劇場スケジュールのフィルタリング
+    theater_schedule_filtered = theater_df[theater_df['Members'].str.contains(talent_name, na=False)]
 
-    # 3. マージ処理
-    merged_df = pd.merge(
-        talent_events,
-        theater_events,
-        on=['Title', 'Date'],
+    # マージ処理
+    merged_schedule = pd.merge(
+        talent_schedule,
+        theater_schedule_filtered,
+        left_on=['EventTitle', 'EventDate'],
+        right_on=['Title', 'Date'],
         how='outer',
-        suffixes=('_theater', '_talent')
+        suffixes=('_talent', '_theater')
     )
 
-    # 中間CSV出力（デバッグ用）
-    output_merged_df = f"schedule_{talent_id}_merged_df.csv"
-    merged_df.to_csv(output_merged_df, index=False, encoding='utf-8-sig')
-    logging.info(f"{output_merged_df} を出力しました。")
+    # 欠損値を埋める
+    merged_schedule.fillna('-', inplace=True)
 
-    # 4. 欠損値処理と列の整形
-    final_df = merged_df[[
-        'Date', 'Title', 'Venue_talent', 'OpenTime', 'StartTime_talent',
-        'EndTime', 'Members_talent', 'Detail', 'Image_talent', 'Link_talent'
+    # タレントスケジュールにないTitleを追加
+    for column in ['TheaterVenue', 'EventStartTime', 'EndTime', 'EventMembers', 'Detail', 'Image', 'TicketLink']:
+        if column not in merged_schedule.columns:
+            merged_schedule[column] = '-'
+
+    # 出力用データフレームの作成
+    final_schedule = merged_schedule[[
+        'EventDate', 'EventTitle', 'TheaterVenue', 'OpenTime', 'EventStartTime',
+        'EndTime', 'EventMembers', 'Detail', 'Image', 'TicketLink'
     ]].rename(columns={
-        'Venue_talent': 'Venue',
-        'StartTime_talent': 'StartTime',
-        'Members_talent': 'Members',
-        'Image_talent': 'Image',
-        'Link_talent': 'Link'
+        'EventDate': 'Date',
+        'EventTitle': 'Title',
+        'TheaterVenue': 'Venue',
+        'EventStartTime': 'StartTime',
+        'EventMembers': 'Members',
+        'TicketLink': 'Link'
     })
 
-    # 5. CSVに出力
+    for column in ['Detail', 'Members']:
+        final_schedule[column] = final_schedule[column].apply(clean_text)
+
+    # ソート処理
+    final_schedule.sort_values(by=['Date', 'StartTime'], inplace=True)
+
+    # CSV出力
     output_filename = f"schedules/{talent_id}_{talent_name}.csv"
-    final_df.to_csv(output_filename, index=False, encoding='utf-8-sig')
+    final_schedule.to_csv(output_filename, index=False, encoding='utf-8-sig')
     logging.info(f"{output_filename} を出力しました。")
+
+def clean_text(text):
+    """
+    改行やカンマを適切に整形する
+    """
+    if isinstance(text, str):
+        text = text.replace('\n', ' ').replace(',', '、').strip()
+    return text
 
 # .envからタレント情報を取得
 talents = json.loads(os.getenv('TALENTS'))
 
-# タレントごとにマージ処理を実行
+# タレントごとに処理を実行
 for talent in talents:
-    merge_and_export(talent['id'], talent['name'])
+    process_talent_schedule(talent['id'], talent['name'])
 
 logging.info("全タレントの処理が完了しました。")
