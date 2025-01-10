@@ -44,13 +44,13 @@ def get_ticket_info(talent_id, talent_name):
         events.append({
             'TalentName': talent_name,
             'TalentID': talent_id,
-            'EventTitle': title,
-            'EventDate': date,
-            'EventStartTime': time,
-            'EventMembers': members,
-            'TheaterVenue': venue,
+            'Title': title,
+            'Date': date,
+            'StartTime': time,
+            'Members': members,
+            'Venue': venue,
             'Image': image,
-            'TicketLink': link
+            'Link': link
         })
 
     driver.quit()
