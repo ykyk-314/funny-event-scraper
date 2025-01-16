@@ -116,6 +116,17 @@ def detect_changes(new_data, existing_file):
 
     existing_data = pd.read_csv(existing_file, encoding='utf-8-sig')
     diff = pd.concat([new_data, existing_data]).drop_duplicates(keep=False)
+
+    # 差分データの中で重複があれば、不足する値を補い合う
+    diff = diff.groupby(['公演日', 'タイトル', '会場', '開演']).agg({
+        '開場': lambda x: x.dropna().iloc[0] if not x.dropna().empty else '-',
+        '終演': lambda x: x.dropna().iloc[0] if not x.dropna().empty else '-',
+        '出演者': lambda x: x.dropna().iloc[0] if not x.dropna().empty else '-',
+        '詳細': lambda x: x.dropna().iloc[0] if not x.dropna().empty else '-',
+        'チケット': lambda x: x.dropna().iloc[0] if not x.dropna().empty else '-',
+        '画像': lambda x: x.dropna().iloc[0] if not x.dropna().empty else '-'
+    }).reset_index()
+
     return diff
 
 def load_template(template_path):
@@ -181,17 +192,19 @@ def send_notification(diff_data, talent_name):
         event_detail_text = event_detail_text.replace('{{公演日}}', row['公演日'])
         event_detail_text = event_detail_text.replace('{{会場}}', row['会場'])
         event_detail_text = event_detail_text.replace('{{開演}}', row['開演'])
-        event_detail_text = event_detail_text.replace('{{詳細}}', row['詳細'])
+        event_detail_text = event_detail_text.replace('{{出演者}}', row['出演者'])
+        event_detail_text = event_detail_text.replace('{{詳細}}', row['詳細'].replace(' ', '\n'))
         event_detail_text = event_detail_text.replace('{{チケット}}', row['チケット'])
 
         event_detail_html = event_detail_html.replace('{{タイトル}}', row['タイトル'])
         event_detail_html = event_detail_html.replace('{{公演日}}', row['公演日'])
         event_detail_html = event_detail_html.replace('{{会場}}', row['会場'])
         event_detail_html = event_detail_html.replace('{{開演}}', row['開演'])
-        event_detail_html = event_detail_html.replace('{{詳細}}', row['詳細'])
+        event_detail_html = event_detail_html.replace('{{出演者}}', row['出演者'])
+        event_detail_html = event_detail_html.replace('{{詳細}}', row['詳細'].replace(' ', '<br>'))
         event_detail_html = event_detail_html.replace('{{チケット}}', row['チケット'])
         if row['画像'] != '-':
-            event_detail_html = event_detail_html.replace('{{画像}}', f"<img src='{row['画像']}' alt='{row['タイトル']}'>")
+            event_detail_html = event_detail_html.replace('{{画像}}', f"<div class='img-box'><img src='{row['画像']}' alt='{row['タイトル']}'></div>")
         else:
             event_detail_html = event_detail_html.replace('{{画像}}', '')
 
