@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 import csv
 import unicodedata
 import re
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # ログの設定
 logging.basicConfig(level=logging.INFO)
@@ -40,20 +43,16 @@ def normalize_title(title):
     """
     タイトルの表記揺れを正規化
     """
-    # 英数字記号を半角に置換
+    # 英数字記号を半角に
     title = unicodedata.normalize('NFKC', title)
-    # 「〇〇の部」「その壱/その弐」を削除
+    # 特定のキーワード削除
     title = re.sub(r"\s*(\d{1,2}:\d{2}の部|その[壱弐参]|\d{1,2}月公演)", "", title)
-    # 余分な空白を削除
-    title = title.strip()
-
-    return title
+    return title.strip()
 
 def merge_data(talent_data, schedule_data):
     """
     タレントデータとスケジュールデータを結合
     """
-    # タイトルの正規化
     talent_data.loc[:, 'Title'] = talent_data['Title'].apply(normalize_title)
     schedule_data.loc[:, 'Title'] = schedule_data['Title'].apply(normalize_title)
 
@@ -63,7 +62,7 @@ def merge_data(talent_data, schedule_data):
     merged_df.fillna('-', inplace=True)
 
     # 出力データを整形
-    final_df = merged_df[[
+    return merged_df[[
         'Date', 'Title', 'Venue', 'OpenTime', 'StartTime',
         'EndTime', 'Members', 'Detail', 'Link', 'Image'
     ]].rename(columns={
@@ -79,12 +78,9 @@ def merge_data(talent_data, schedule_data):
         'Image': '画像'
     })
 
-    return final_df
-
 def duplicate_merge(merged_data):
     """
     重複データをマージ
-    両データから取得できる情報を結合する
     """
     def merge_rows(row):
         non_hyphen_values = row[row != '-']
@@ -110,6 +106,106 @@ def duplicate_merge(merged_data):
 
     return merged_data
 
+def detect_changes(new_data, existing_file):
+    """
+    既存ファイルと新規データを比較し、差分を抽出
+    """
+    if not os.path.exists(existing_file):
+        logging.info(f"既存ファイルが見つかりません: {existing_file}")
+        return new_data
+
+    existing_data = pd.read_csv(existing_file, encoding='utf-8-sig')
+    diff = pd.concat([new_data, existing_data]).drop_duplicates(keep=False)
+    return diff
+
+def load_template(template_path):
+    """
+    テンプレートファイルを読み込む
+    """
+    with open(template_path, 'r', encoding='utf-8') as file:
+        template = file.read()
+    return template
+
+def send_email_notification(subject, body, html_body):
+    """
+    メール通知を送信
+    """
+    smtp_server = os.getenv('SMTP_SERVER')
+    smtp_port = int(os.getenv('SMTP_PORT', 587))
+    email_address = os.getenv('EMAIL_ADDRESS')
+    email_password = os.getenv('EMAIL_PASSWORD')
+    sender = os.getenv('SENDER')
+    to_email = os.getenv('TO_EMAIL')
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['From'] = sender
+        msg['To'] = to_email
+        msg['Subject'] = subject
+
+        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(email_address, email_password)
+            server.send_message(msg)
+            logging.info("通知メールが送信されました。")
+    except Exception as e:
+        logging.error(f"メール送信エラー: {e}")
+
+def send_notification(diff_data, talent_name):
+    """
+    差分データを基に通知を送信
+    """
+    if diff_data.empty:
+        logging.info(f"{talent_name} に新規イベントはありません")
+        return
+
+    subject = f"{talent_name} の新規イベント通知"
+    body_template = load_template('email/new_events.txt')
+    html_template = load_template('email/new_events.html')
+    event_details_template = load_template('email/event_details.txt')
+    event_details_html_template = load_template('email/event_details.html')
+
+    body = body_template.replace('{{talent_name}}', talent_name)
+    html_body = html_template.replace('{{talent_name}}', talent_name)
+
+    event_details_text = ""
+    event_details_html = ""
+    for idx, row in diff_data.iterrows():
+        event_detail_text = event_details_template
+        event_detail_html = event_details_html_template
+
+        event_detail_text = event_detail_text.replace('{{タイトル}}', row['タイトル'])
+        event_detail_text = event_detail_text.replace('{{公演日}}', row['公演日'])
+        event_detail_text = event_detail_text.replace('{{会場}}', row['会場'])
+        event_detail_text = event_detail_text.replace('{{開演}}', row['開演'])
+        event_detail_text = event_detail_text.replace('{{詳細}}', row['詳細'])
+        event_detail_text = event_detail_text.replace('{{チケット}}', row['チケット'])
+
+        event_detail_html = event_detail_html.replace('{{タイトル}}', row['タイトル'])
+        event_detail_html = event_detail_html.replace('{{公演日}}', row['公演日'])
+        event_detail_html = event_detail_html.replace('{{会場}}', row['会場'])
+        event_detail_html = event_detail_html.replace('{{開演}}', row['開演'])
+        event_detail_html = event_detail_html.replace('{{詳細}}', row['詳細'])
+        event_detail_html = event_detail_html.replace('{{チケット}}', row['チケット'])
+        if row['画像'] != '-':
+            event_detail_html = event_detail_html.replace('{{画像}}', f"<img src='{row['画像']}' alt='{row['タイトル']}'>")
+        else:
+            event_detail_html = event_detail_html.replace('{{画像}}', '')
+
+        event_details_text += event_detail_text + "\n\n"
+        event_details_html += event_detail_html
+
+        # debug: コンソールに出力
+        print(f"新しいイベントが追加されました: {row['タイトル']}")
+
+    body = body.replace('{{event_details}}', event_details_text)
+    html_body = html_body.replace('{{event_details}}', event_details_html)
+
+    send_email_notification(subject, body, html_body)
+
 def save_to_csv(final_df, talent_id, talent_name):
     """
     結合データをCSVに出力
@@ -134,21 +230,23 @@ def main():
 
         # スケジュールのフィルタリング
         filtered_schedule = filter_schedule(theater_df, talent_name)
-
         # タレントスケジュールのフィルタリング
         filtered_talent = filter_talents(talent_df, talent_name)
 
         # データの結合
         merged_data = merge_data(filtered_talent, filtered_schedule)
-
         # 重複データをマージ
         merged_data = duplicate_merge(merged_data)
 
+        # 既存ファイルとの差分を検出
+        existing_file = f'schedules/{talent_id}_{talent_name}.csv'
+        diff_data = detect_changes(merged_data, existing_file)
+
         # CSVへの出力
         save_to_csv(merged_data, talent_id, talent_name)
+        send_notification(diff_data, talent_name)
 
     logging.info("全タレントの処理が完了しました")
 
 if __name__ == "__main__":
     main()
-

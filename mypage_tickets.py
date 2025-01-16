@@ -119,8 +119,9 @@ def scrape_purchase_history(driver):
 
         history = []
         current_page = 1
+        max_pages = 2  # 最大ページ数を2ページに制限
 
-        while True:
+        while current_page <= max_pages:
             print(f"Scraping page {current_page}...")
 
             # テーブル行を再取得して処理
@@ -174,6 +175,7 @@ def scrape_purchase_history(driver):
                         "所在地": location,
                         "合計金額": total_price,
                         "枚数": quantity,
+                        "分配": "",
                         "席種": seat_type,
                         "引取方法": pickup_method,
                         "引換票番号": ticket_number,
@@ -187,7 +189,7 @@ def scrape_purchase_history(driver):
             next_page = driver.find_elements(By.CSS_SELECTOR, "ul.pagenation a")
             next_links = [link for link in next_page if link.text.strip() == str(current_page + 1)]
 
-            if next_links:
+            if next_links and current_page < max_pages:
                 next_links[0].click()
 
                 # ページ遷移の待機
@@ -205,7 +207,9 @@ def scrape_purchase_history(driver):
         # 新規データをDataFrameに変換してCSVに追加
         if history:
             new_data = pd.DataFrame(history)
-            new_data["予約番号"] = new_data["予約番号"].astype(str)  # 明示的に文字列型に変換
+            # 明示的に文字列型に変換
+            new_data["予約番号"] = new_data["予約番号"].astype(str)
+            new_data["引換票番号"] = new_data["引換票番号"].astype(str)
 
             if os.path.exists(csv_file):
                 existing_data = pd.read_csv(csv_file, encoding="utf-8-sig", dtype={"予約番号": str})

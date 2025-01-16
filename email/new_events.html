@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新規イベント通知</title>
+    <meta name="robots" content="noindex,nofollow">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        p {
+            margin: 10px 0;
+        }
+        .event-details {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .event-details img {
+            width: 80%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .event-details a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .event-details a:hover {
+            text-decoration: underline;
+        }
+        .event-details h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .event-details .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1em;
+            color: #fff;
+            background-color: #1a73e8;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .event-details .btn:hover {
+            background-color: #1558b0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>新規イベント通知</h1>
+        <h2>{{talent_name}}</h2>
+        <p>以下の情報が追加されました</p>
+        {{event_details}}
+    </div>
+</body>
+</html>
