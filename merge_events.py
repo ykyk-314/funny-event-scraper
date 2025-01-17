@@ -112,7 +112,7 @@ def detect_changes(new_data, existing_file):
     """
     if not os.path.exists(existing_file):
         logging.info(f"既存ファイルが見つかりません: {existing_file}")
-        return new_data
+        return new_data.assign(フラグ='flag-new')
 
     existing_data = pd.read_csv(existing_file, encoding='utf-8-sig')
     diff = pd.concat([new_data, existing_data]).drop_duplicates(keep=False)
@@ -126,6 +126,23 @@ def detect_changes(new_data, existing_file):
         'チケット': lambda x: x.dropna().iloc[0] if not x.dropna().empty else '-',
         '画像': lambda x: x.dropna().iloc[0] if not x.dropna().empty else '-'
     }).reset_index()
+
+    # 新規追加と更新のフラグを設定
+    existing_keys = existing_data[['公演日', 'タイトル', '会場', '開演']].apply(tuple, axis=1).tolist()
+    diff['フラグ'] = diff.apply(lambda row: 'flag-new' if (row['公演日'], row['タイトル'], row['会場'], row['開演']) not in existing_keys else 'flag-update', axis=1)
+
+    # 更新された項目を検出
+    for idx, row in diff.iterrows():
+        if row['フラグ'] == 'flag-update':
+            existing_row = existing_data[(existing_data['公演日'] == row['公演日']) & 
+                                         (existing_data['タイトル'] == row['タイトル']) & 
+                                         (existing_data['会場'] == row['会場']) & 
+                                         (existing_data['開演'] == row['開演'])]
+            updated_fields = []
+            for field in ['公演日', '会場', '開演', '出演者', '詳細', '画像']:
+                if row[field] != existing_row[field].values[0]:
+                    updated_fields.append(field)
+            diff.at[idx, '更新項目'] = ', '.join(updated_fields)
 
     return diff
 
@@ -195,6 +212,8 @@ def send_notification(diff_data, talent_name):
         event_detail_text = event_detail_text.replace('{{出演者}}', row['出演者'])
         event_detail_text = event_detail_text.replace('{{詳細}}', row['詳細'].replace(' ', '\n'))
         event_detail_text = event_detail_text.replace('{{チケット}}', row['チケット'])
+        event_detail_text = event_detail_text.replace('{{フラグ}}', row['フラグ'])
+        event_detail_text = event_detail_text.replace('{{画像}}', '')
 
         event_detail_html = event_detail_html.replace('{{タイトル}}', row['タイトル'])
         event_detail_html = event_detail_html.replace('{{公演日}}', row['公演日'])
@@ -203,10 +222,16 @@ def send_notification(diff_data, talent_name):
         event_detail_html = event_detail_html.replace('{{出演者}}', row['出演者'])
         event_detail_html = event_detail_html.replace('{{詳細}}', row['詳細'].replace(' ', '<br>'))
         event_detail_html = event_detail_html.replace('{{チケット}}', row['チケット'])
+        event_detail_html = event_detail_html.replace('{{フラグ}}', row['フラグ'])
         if row['画像'] != '-':
             event_detail_html = event_detail_html.replace('{{画像}}', f"<div class='img-box'><img src='{row['画像']}' alt='{row['タイトル']}'></div>")
         else:
             event_detail_html = event_detail_html.replace('{{画像}}', '')
+
+        if row['フラグ'] == 'flag-update':
+            event_detail_html = event_detail_html.replace('{{更新項目}}', f"{row['更新項目']} 更新")
+        else:
+            event_detail_html = event_detail_html.replace('{{更新項目}}', '')
 
         event_details_text += event_detail_text + "\n\n"
         event_details_html += event_detail_html
@@ -256,7 +281,7 @@ def main():
         diff_data = detect_changes(merged_data, existing_file)
 
         # CSVへの出力
-        save_to_csv(merged_data, talent_id, talent_name)
+        # save_to_csv(merged_data, talent_id, talent_name)
         send_notification(diff_data, talent_name)
 
     logging.info("全タレントの処理が完了しました")

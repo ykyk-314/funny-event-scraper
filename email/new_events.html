@@ -27,22 +27,51 @@
         p {
             margin: 10px 0;
         }
-
         .event-details {
             border-top: 1px solid #ddd;
             padding-top: 10px;
             margin-top: 10px;
+        }
+        .event-details .title-box {
+            display: flex;
+            align-items: center;
+        }
+        .event-details .flag {
+            padding: 17px 35px;
+            color: #fff;
+            border-radius: 5px;
+            margin-right: 10px;
+            position: relative;
+            background-color: #28a745;
+        }
+        .event-details .flag::after {
+            content: "NEW";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .event-details .flag.flag-update {
+            background-color: #ffc107;
+        }
+        .event-details .flag.flag-update::after {
+            content: "UPDATE";
+        }
+        .event-details h3 {
+            font-size: 1.5em;
+            color: #333;
+            margin: 10px 0;
+        }
+        .event-details .diff-txt {
+            color: #666;
         }
         .event-details a {
             text-decoration: none;
         }
         .event-details a:hover {
             text-decoration: underline;
-        }
-        .event-details h3 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
-            color: #333;
         }
         .event-details p {
             margin: 5px 0;
@@ -88,7 +117,6 @@
             border-radius: 4px;
         }
     </style>
-
 </head>
 <body>
     <div class="container">
