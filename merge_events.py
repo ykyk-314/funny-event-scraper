@@ -154,7 +154,7 @@ def load_template(template_path):
         template = file.read()
     return template
 
-def send_email_notification(subject, body, html_body):
+def send_email_notification(subject, html_body):
     """
     メール通知を送信
     """
@@ -171,7 +171,6 @@ def send_email_notification(subject, body, html_body):
         msg['To'] = to_email
         msg['Subject'] = subject
 
-        msg.attach(MIMEText(body, 'plain'))
         msg.attach(MIMEText(html_body, 'html'))
 
         with smtplib.SMTP(smtp_server, smtp_port) as server:
@@ -191,29 +190,14 @@ def send_notification(diff_data, talent_name):
         return
 
     subject = f"{talent_name} の新規イベント通知"
-    body_template = load_template('email/new_events.txt')
     html_template = load_template('email/new_events.html')
-    event_details_template = load_template('email/event_details.txt')
     event_details_html_template = load_template('email/event_details.html')
 
-    body = body_template.replace('{{talent_name}}', talent_name)
     html_body = html_template.replace('{{talent_name}}', talent_name)
 
-    event_details_text = ""
     event_details_html = ""
     for idx, row in diff_data.iterrows():
-        event_detail_text = event_details_template
         event_detail_html = event_details_html_template
-
-        event_detail_text = event_detail_text.replace('{{タイトル}}', row['タイトル'])
-        event_detail_text = event_detail_text.replace('{{公演日}}', row['公演日'])
-        event_detail_text = event_detail_text.replace('{{会場}}', row['会場'])
-        event_detail_text = event_detail_text.replace('{{開演}}', row['開演'])
-        event_detail_text = event_detail_text.replace('{{出演者}}', row['出演者'])
-        event_detail_text = event_detail_text.replace('{{詳細}}', row['詳細'].replace(' ', '\n'))
-        event_detail_text = event_detail_text.replace('{{チケット}}', row['チケット'])
-        event_detail_text = event_detail_text.replace('{{フラグ}}', row['フラグ'])
-        event_detail_text = event_detail_text.replace('{{画像}}', '')
 
         event_detail_html = event_detail_html.replace('{{タイトル}}', row['タイトル'])
         event_detail_html = event_detail_html.replace('{{公演日}}', row['公演日'])
@@ -233,16 +217,14 @@ def send_notification(diff_data, talent_name):
         else:
             event_detail_html = event_detail_html.replace('{{更新項目}}', '')
 
-        event_details_text += event_detail_text + "\n\n"
         event_details_html += event_detail_html
 
         # debug: コンソールに出力
         print(f"新しいイベントが追加されました: {row['タイトル']}")
 
-    body = body.replace('{{event_details}}', event_details_text)
     html_body = html_body.replace('{{event_details}}', event_details_html)
 
-    send_email_notification(subject, body, html_body)
+    send_email_notification(subject, html_body)
 
 def save_to_csv(final_df, talent_id, talent_name):
     """
@@ -281,7 +263,7 @@ def main():
         diff_data = detect_changes(merged_data, existing_file)
 
         # CSVへの出力
-        # save_to_csv(merged_data, talent_id, talent_name)
+        save_to_csv(merged_data, talent_id, talent_name)
         send_notification(diff_data, talent_name)
 
     logging.info("全タレントの処理が完了しました")
