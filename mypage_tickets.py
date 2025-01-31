@@ -15,8 +15,8 @@ load_dotenv()
 chromedriver_path = os.getenv('CHROMEDRIVER_PATH')
 
 login_url = "https://ty.funity.jp/ticket/mypage_top/view?clientid=yoshimoto"
-login_id = os.getenv('FANY_LOGIN_ID')
-login_pw = os.getenv('FANY_LOGIN_PW')
+login_id = os.getenv('MYF_LOGIN_ID')
+login_pw = os.getenv('MYF_LOGIN_PW')
 
 def setup_driver_options():
     options = Options()

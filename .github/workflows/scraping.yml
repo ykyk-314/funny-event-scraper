@@ -11,7 +11,11 @@ env:
   TALENT_BASE_URL: ${{ secrets.TALENT_BASE_URL }}
   TALENTS: ${{ secrets.TALENTS }}
   THEATERS: ${{ secrets.THEATERS }}
-# GithubActionで手動実行
+  MYF_LOGIN_ID: ${{ secrets.MYF_LOGIN_ID }}
+  MYF_LOGIN_PW: ${{ secrets.MYF_LOGIN_PW }}
+  GIT_USER: ${{ secrets.GIT_USER }}
+  GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+
 jobs:
   scraping:
     runs-on: ubuntu-latest
@@ -42,8 +46,8 @@ jobs:
 
       - name: Commit & Push results
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.email "${{ secrets.GIT_EMAIL }}"
+          git config --global user.name "${{ secrets.GIT_USER }}"
           git add *.json
           git commit -m "Update scraped data" || echo "No changes to commit"
           git push
