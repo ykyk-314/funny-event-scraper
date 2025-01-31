@@ -1,0 +1,23 @@
+{
+  "name": "funny-event-scraper",
+  "version": "1.0.0",
+  "description": "このリポジトリは、お笑い公演や劇場イベント情報の取得を目的としたPythonベースのスクレイピングプロジェクトです。対象ページからチケット情報やスケジュールを収集し、CSV形式で保存します。",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.pgmq.com:ykyk-314/funny-event-scraper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}
