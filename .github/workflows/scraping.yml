@@ -24,6 +24,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Debug Environment Variables
+        run: |
+          echo "THEATERS=${THEATERS}"
+
       - name: Install dependencies
         run: |
           npm install
