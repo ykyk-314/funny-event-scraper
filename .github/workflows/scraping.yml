@@ -28,10 +28,29 @@ jobs:
         run: |
           echo "THEATERS=${THEATERS}"
 
+      - name: Set environment variables based on schedule
+        run: |
+          if [[ "${{ github.event.schedule }}" == "30 1,3,6,7,9,12 * * *" ]]; then
+            echo "RUN_MERGE=true" >> $GITHUB_ENV
+          else
+            echo "RUN_MERGE=false" >> $GITHUB_ENV
+          fi
+
       - name: Install dependencies
         run: |
           npm install
           npx playwright install
+
+      - name: Install Python dependencies (only for mypage)
+        if: env.RUN_MERGE == 'true'
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pandas
+
+      - name: Debug Installed Packages (only for mypage)
+        if: env.RUN_MERGE == 'true'
+        run: |
+          python3 -c "import pandas; print('pandas installed successfully')"
 
       - name: Run talent tickets scraping
         run: node talent_tickets.js
@@ -41,13 +60,13 @@ jobs:
         run: node theater_schedules.js
         if: github.event.schedule == '21 1,3,6,7,9,12 * * *'
 
-      - name: Run merge_events
-        run: python3 merge_events.py
-        if: github.event.schedule == '30 1,3,6,7,9,12 * * *'
+      # - name: Run merge_events
+      #   run: python3 merge_events.py
+      #   if: github.event.schedule == '30 1,3,6,7,9,12 * * *'
 
-      - name: Run mypage tickets scraping
-        run: node mypage_tickets.js
-        if: github.event.schedule == '15 9 * * *'
+      # - name: Run mypage tickets scraping
+      #   run: node mypage_tickets.js
+      #   if: github.event.schedule == '15 9 * * *'
 
       - name: Commit & Push results
         run: |
