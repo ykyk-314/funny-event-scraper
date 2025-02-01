@@ -70,8 +70,8 @@ jobs:
 
       - name: Commit & Push results
         run: |
-          git config --global user.email "${{ secrets.GIT_EMAIL }}"
-          git config --global user.name "${{ secrets.GIT_USER }}"
+          git config --global user.email "${{ env.GIT_EMAIL }}"
+          git config --global user.name "${{ env.GIT_USER }}"
           git add *.json
           git commit -m "Update scraped data" || echo "No changes to commit"
           git push
