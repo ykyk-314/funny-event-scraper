@@ -22,14 +22,12 @@ jobs:
       - name: Load environment variables
         run: |
           echo "TALENT_BASE_URL=${{ vars.TALENT_BASE_URL }}" >> $GITHUB_ENV
-          echo "TALENTS_ORIGIN=${{ vars.TALENTS }}" >> $GITHUB_ENV
-          echo "TALENTS=$(echo '${{ vars.TALENTS }}' | jq -c .)" >> $GITHUB_ENV
-          echo "THEATERS=$(echo '${{ vars.THEATERS }}' | jq -c .)" >> $GITHUB_ENV
+          printf "TALENTS=%s\n" "$(echo '${{ vars.TALENTS }}' | jq -c .)" >> $GITHUB_ENV
+          printf "THEATERS=%s\n" "$(echo '${{ vars.THEATERS }}' | jq -c .)" >> $GITHUB_ENV
 
       - name: Debug Environment Variables
         run: |
           echo "TALENT_BASE_URL=${{ env.TALENT_BASE_URL }}"
-          echo "TALENTS_ORIGIN=${{ env.TALENTS_ORIGIN }}"
           echo "TALENTS=${{ env.TALENTS }}"
           echo "THEATERS=${{ env.THEATERS }}"
 
