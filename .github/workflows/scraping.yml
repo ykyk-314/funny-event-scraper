@@ -22,7 +22,7 @@ jobs:
       - name: Load environment variables
         run: |
           echo "TALENT_BASE_URL=${{ env.TALENT_BASE_URL }}" >> $GITHUB_ENV
-          echo "TALENTS=${{ env.TALENTS }}" >> $GITHUB_ENV
+          echo "TALENTS=${{ vars.TALENTS }}" >> $GITHUB_ENV
 
       - name: Debug Environment Variables
         run: |
