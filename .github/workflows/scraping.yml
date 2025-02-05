@@ -21,8 +21,9 @@ jobs:
 
       - name: Load environment variables
         run: |
-          echo "TALENT_BASE_URL=${{ env.TALENT_BASE_URL }}" >> $GITHUB_ENV
+          echo "TALENT_BASE_URL=${{ vars.TALENT_BASE_URL }}" >> $GITHUB_ENV
           echo "TALENTS=${{ vars.TALENTS }}" >> $GITHUB_ENV
+          echo "THEATERS=${{ vars.THEATERS }}" >> $GITHUB_ENV
 
       - name: Debug Environment Variables
         run: |
@@ -70,20 +71,14 @@ jobs:
       #   run: node mypage_tickets.js
       #   if: github.event.schedule == '15 9 * * *'
 
-      - name: DEBUG GIT
-        env:
-          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
-          GIT_USER: ${{ secrets.GIT_USER }}
-        run: |
-          echo "THEATERS=${GIT_EMAIL}"
-
       - name: Commit & Push results
         env:
-          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
-          GIT_USER: ${{ secrets.GIT_USER }}
+          GIT_EMAIL: "github-actions[bot]@users.noreply.github.com"
+          GIT_USER: "github-actions[bot]"
+          GH_PAT: ${{ secrets.GH_FUNNY_PAT }}
         run: |
           git config --global user.email "${GIT_EMAIL}"
           git config --global user.name "${GIT_USER}"
           git add *.json
           git commit -m "Update scraped data" || echo "No changes to commit"
-          git push
+          git push https://x-access-token:${GH_PAT}@github.com/ykyk-314/funny-event-scraper.git
