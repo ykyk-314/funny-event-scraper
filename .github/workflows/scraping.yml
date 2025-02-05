@@ -12,15 +12,17 @@ jobs:
   scraping:
     runs-on: ubuntu-latest
 
+    environment: 
+      name: config
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Load environment variables
         run: |
-          echo "TALENT_BASE_URL=${{ vars.TALENT_BASE_URL }}" >> $GITHUB_ENV
-          echo "TALENTS=${{ vars.TALENTS }}" >> $GITHUB_ENV
-          echo "THEATERS=${{ vars.THEATERS }}" >> $GITHUB_ENV
+          echo "TALENT_BASE_URL=${{ env.TALENT_BASE_URL }}" >> $GITHUB_ENV
+          echo "TALENTS=${{ env.TALENTS }}" >> $GITHUB_ENV
 
       - name: Debug Environment Variables
         run: |
