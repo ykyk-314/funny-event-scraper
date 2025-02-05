@@ -75,14 +75,9 @@ jobs:
         if: github.event.schedule == '15 9 * * *'
 
       - name: Commit & Push results
-        env:
-          GH_PAT: ${{ secrets.GH_FUNNY_PAT }}
         run: |
-          echo "https://x-access-token:${GH_PAT}@github.com/"
-          echo "https://x-access-token:${{ env.GH_PAT }}@github.com/"
-          
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git add *.json
           git commit -m "Update scraped data" || echo "No changes to commit"
-          git push https://x-access-token:${{ env.GH_PAT }}@github.com/ykyk-314/funny-event-scraper.git
+          git push ${{ secrets.GH_FUNNY_PAT }}
