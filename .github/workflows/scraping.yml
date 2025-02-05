@@ -76,12 +76,13 @@ jobs:
 
       - name: Commit & Push results
         env:
-          GIT_EMAIL: "github-actions[bot]@users.noreply.github.com"
-          GIT_USER: "github-actions[bot]"
           GH_PAT: ${{ secrets.GH_FUNNY_PAT }}
         run: |
-          git config --global user.email "${GIT_EMAIL}"
-          git config --global user.name "${GIT_USER}"
+          echo "https://x-access-token:${GH_PAT}@github.com/"
+          echo "https://x-access-token:${{ env.GH_PAT }}@github.com/"
+          
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
           git add *.json
           git commit -m "Update scraped data" || echo "No changes to commit"
-          git push https://x-access-token:${GH_PAT}@github.com/ykyk-314/funny-event-scraper.git
+          git push https://x-access-token:${{ env.GH_PAT }}@github.com/ykyk-314/funny-event-scraper.git
