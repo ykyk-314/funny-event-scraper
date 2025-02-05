@@ -2,7 +2,20 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 require('dotenv').config();
 
-const theaters = JSON.parse(process.env.THEATERS);
+const theatersRaw = process.env.THEATERS;
+if (!theatersRaw) {
+    console.error("ERROR: THEATERS environment variable is not set.");
+    process.exit(1);
+}
+
+let theaters;
+try {
+    theaters = JSON.parse(theatersRaw);
+} catch (error) {
+    console.error("ERROR: Failed to parse THEATERS JSON:", error.message);
+    console.error("Raw data:", JSON.stringify(theatersRaw, null, 2)); // デバッグ用に表示
+    process.exit(1);
+}
 
 async function getScheduleInfo(venueName, url) {
     const browser = await chromium.launch({ headless: true });
