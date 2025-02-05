@@ -3,7 +3,19 @@ const fs = require('fs');
 require('dotenv').config();
 
 const talentUrl = process.env.TALENT_BASE_URL;
-const talents = JSON.parse(process.env.TALENTS);
+const talentsRaw = process.env.TALENTS;
+if (!talentsRaw) {
+    console.error("ERROR: TALENTS environment variable is not set.");
+    process.exit(1);
+}
+
+let talents;
+try {
+    talents = JSON.parse(talentsRaw.replace(/\n/g, "").trim());
+} catch (error) {
+    console.error("ERROR: Failed to parse TALENTS JSON:", error.message);
+    process.exit(1);
+}
 
 async function getTicketInfo(talentId, talentName) {
     const browser = await chromium.launch({ headless: true });
