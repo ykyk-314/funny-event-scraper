@@ -74,10 +74,20 @@ jobs:
         run: node mypage_tickets.js
         if: github.event.schedule == '15 9 * * *'
 
+      # - name: Commit & Push results
+      #   run: |
+      #     git config user.email "39142831+github-actions[bot]@users.noreply.github.com"
+      #     git config user.name "github-actions[bot]"
+      #     git add .
+      #     git commit -m "Update scraped data" || echo "No changes to commit"
+      #     git push ${{ secrets.GH_FUNNY_PAT }}
+
       - name: Commit & Push results
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
-          git config user.email "39142831+ykyk-314@users.noreply.github.com"
-          git config user.name "yokoyan"
+          git config --local user.email "39142831+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git add .
-          git commit -m "Update scraped data" || echo "No changes to commit"
-          git push
+          git commit -m "Botによるコミット"
+          git push origin main
