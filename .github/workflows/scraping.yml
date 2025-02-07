@@ -78,7 +78,7 @@ jobs:
       #   run: |
       #     git config user.email "39142831+github-actions[bot]@users.noreply.github.com"
       #     git config user.name "github-actions[bot]"
-      #     git add .
+      #     git add *.json
       #     git commit -m "Update scraped data" || echo "No changes to commit"
       #     git push ${{ secrets.GH_FUNNY_PAT }}
 
@@ -88,6 +88,11 @@ jobs:
         run: |
           git config --local user.email "39142831+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add .
-          git commit -m "Botによるコミット"
-          git push origin main
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "Update data"
+            git push origin main
+          else
+            echo "No changes detected, skipping commit & push."
+          fi
